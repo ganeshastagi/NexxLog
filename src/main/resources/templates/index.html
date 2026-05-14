@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobTracker - Stay on Top of Your Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a class="nav-brand" th:href="@{/}">
+            <span class="brand-icon">&#128188;</span> JobTracker
+        </a>
+        <div class="nav-links">
+            <a th:href="@{/login}" class="btn btn-outline">Log In</a>
+            <a th:href="@{/register}" class="btn btn-primary">Register</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <span class="hero-badge">Free to use &bull; No credit card needed</span>
+        <h1 class="hero-title">Manage Your Job Search <span class="highlight">Effortlessly</span></h1>
+        <p class="hero-subtitle">
+            Keep all your job applications in one place. Track statuses, deadlines,
+            and follow-ups so you never miss an opportunity.
+        </p>
+        <div class="hero-actions">
+            <a th:href="@{/register}" class="btn btn-primary btn-large">Get Started Free</a>
+            <a th:href="@{/login}" class="btn btn-outline btn-large">Log In</a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="features-container">
+        <h2 class="section-title">Everything you need to stay organized</h2>
+        <div class="features-grid">
+
+            <div class="feature-card">
+                <div class="feature-icon">&#128203;</div>
+                <h3>Track Applications</h3>
+                <p>Log every application with the company name, role, date applied, and current status — all in one dashboard.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">&#128200;</div>
+                <h3>Monitor Progress</h3>
+                <p>See at a glance how many roles you've applied to, which are in review, and which need follow-up.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">&#128276;</div>
+                <h3>Never Miss a Follow-up</h3>
+                <p>Add notes and reminders to each application so you stay on top of interviews and callbacks.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">&#128274;</div>
+                <h3>Private &amp; Secure</h3>
+                <p>Your job search is personal. Your data is stored securely and is only visible to you.</p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- CTA Banner -->
+<section class="cta-banner">
+    <div class="cta-content">
+        <h2>Ready to take control of your job search?</h2>
+        <p>Join thousands of job seekers who stay organized with JobTracker.</p>
+        <a th:href="@{/register}" class="btn btn-primary btn-large">Create Your Free Account</a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-container">
+        <p class="footer-brand">&#128188; JobTracker</p>
+        <p class="footer-copy">&copy; 2025 JobTracker. All rights reserved.</p>
+    </div>
+</footer>
+
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexxLog - Application Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a class="nav-brand" th:href="@{/}">
+            <span class="brand-icon">&#128188;</span> JobTracker
+        </a>
+        <div class="nav-links">
+            <span class="nav-hint" th:text="${#authentication.name}"></span>
+            <a th:href="@{/logout}" class="btn btn-outline"
+               onclick="return confirmLogout()">Log Out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="dashboard">
+    <div class="dashboard-container">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1>My Applications</h1>
+                <p class="page-subtitle">
+                    <span th:text="${applications != null ? applications.size() : 0}">0</span> application(s) tracked
+                </p>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('addModal')">
+                + Add Application
+            </button>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total Applied</span>
+                <span class="stat-value" th:text="${stats?.total ?: 0}">0</span>
+            </div>
+            <div class="stat-card stat-card--info">
+                <span class="stat-label">In Review</span>
+                <span class="stat-value" th:text="${stats?.inReview ?: 0}">0</span>
+            </div>
+            <div class="stat-card stat-card--success">
+                <span class="stat-label">Interviews</span>
+                <span class="stat-value" th:text="${stats?.interviews ?: 0}">0</span>
+            </div>
+            <div class="stat-card stat-card--warning">
+                <span class="stat-label">Offers</span>
+                <span class="stat-value" th:text="${stats?.offers ?: 0}">0</span>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <form th:action="@{/applications}" method="get" id="filterForm">
+                <div class="filter-row">
+                    <input
+                            type="text"
+                            name="search"
+                            class="form-control filter-search"
+                            placeholder="Search company or role..."
+                            th:value="${param.search}"
+                    />
+                    <select name="status" class="form-control filter-select" onchange="this.form.submit()">
+                        <option value="">All statuses</option>
+                        <option value="APPLIED"    th:selected="${param.status == 'APPLIED'}">Applied</option>
+                        <option value="IN_REVIEW"  th:selected="${param.status == 'IN_REVIEW'}">In Review</option>
+                        <option value="INTERVIEW"  th:selected="${param.status == 'INTERVIEW'}">Interview</option>
+                        <option value="OFFER"      th:selected="${param.status == 'OFFER'}">Offer</option>
+                        <option value="REJECTED"   th:selected="${param.status == 'REJECTED'}">Rejected</option>
+                        <option value="WITHDRAWN"  th:selected="${param.status == 'WITHDRAWN'}">Withdrawn</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline">Filter</button>
+                    <a th:href="@{/applications}" class="btn btn-ghost">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="table-wrapper">
+            <table class="app-table" th:if="${applications != null and !applications.isEmpty()}">
+                <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Role</th>
+                    <th>Date Applied</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="app : ${applications}" th:data-id="${app.id}">
+                    <td class="cell-company" th:text="${app.companyName}">Acme Corp</td>
+                    <td th:text="${app.jobTitle}">Software Engineer</td>
+                    <td th:text="${#temporals.format(app.dateApplied, 'MMM dd, yyyy')}">Jan 01, 2025</td>
+                    <td>
+                                <span class="status-badge"
+                                      th:classappend="'status-' + ${app.status.name().toLowerCase()}"
+                                      th:text="${app.status.displayName}">Applied</span>
+                    </td>
+                    <td class="cell-notes">
+                        <span th:text="${app.notes}" class="notes-truncate">-</span>
+                    </td>
+                    <td class="col-actions">
+                        <button class="btn-icon btn-icon--edit"
+                                th:onclick="'openEditModal(' + ${app.id} + ')'"
+                                aria-label="Edit application"
+                                title="Edit">&#9998;</button>
+                        <form th:action="@{/applications/{id}/delete(id=${app.id})}"
+                              method="post" style="display:inline;"
+                              onsubmit="return confirmDelete()">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn-icon btn-icon--delete"
+                                    aria-label="Delete application" title="Delete">&#128465;</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div class="empty-state" th:if="${applications == null or applications.isEmpty()}">
+                <div class="empty-icon">&#128203;</div>
+                <h3>No applications yet</h3>
+                <p>Add your first job application to get started.</p>
+                <button class="btn btn-primary" onclick="openModal('addModal')">+ Add Application</button>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- ===== ADD APPLICATION MODAL ===== -->
+<div class="modal-overlay" id="addModal" onclick="closeModalOnOverlay(event, 'addModal')">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Add New Application</h2>
+            <button class="modal-close" onclick="closeModal('addModal')" aria-label="Close">&times;</button>
+        </div>
+        <form th:action="@{/applications}" th:object="${newApplication}" method="post" novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="modal-body">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="companyName">Company name *</label>
+                        <input type="text" id="companyName" th:field="*{companyName}"
+                               class="form-control" placeholder="e.g. Google" required />
+                        <span class="field-error" th:if="${#fields.hasErrors('companyName')}"
+                              th:errors="*{companyName}"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobTitle">Job title *</label>
+                        <input type="text" id="jobTitle" th:field="*{jobTitle}"
+                               class="form-control" placeholder="e.g. Software Engineer" required />
+                        <span class="field-error" th:if="${#fields.hasErrors('jobTitle')}"
+                              th:errors="*{jobTitle}"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dateApplied">Date applied *</label>
+                        <input type="date" id="dateApplied" th:field="*{dateApplied}"
+                               class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" th:field="*{status}" class="form-control">
+                            <option value="APPLIED">Applied</option>
+                            <option value="IN_REVIEW">In Review</option>
+                            <option value="INTERVIEW">Interview</option>
+                            <option value="OFFER">Offer</option>
+                            <option value="REJECTED">Rejected</option>
+                            <option value="WITHDRAWN">Withdrawn</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="jobUrl">Job posting URL</label>
+                    <input type="url" id="jobUrl" th:field="*{jobUrl}"
+                           class="form-control" placeholder="https://..." />
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" th:field="*{notes}" class="form-control"
+                              rows="3" placeholder="Interview dates, contacts, anything useful..."></textarea>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('addModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Application</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== EDIT APPLICATION MODAL ===== -->
+<div class="modal-overlay" id="editModal" onclick="closeModalOnOverlay(event, 'editModal')">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Edit Application</h2>
+            <button class="modal-close" onclick="closeModal('editModal')" aria-label="Close">&times;</button>
+        </div>
+        <form id="editForm" method="post" novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id="editCsrf"/>
+            <input type="hidden" id="editId" name="id" />
+            <div class="modal-body">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editCompanyName">Company name *</label>
+                        <input type="text" id="editCompanyName" name="companyName"
+                               class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editJobTitle">Job title *</label>
+                        <input type="text" id="editJobTitle" name="jobTitle"
+                               class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editDateApplied">Date applied *</label>
+                        <input type="date" id="editDateApplied" name="dateApplied"
+                               class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editStatus">Status</label>
+                        <select id="editStatus" name="status" class="form-control">
+                            <option value="APPLIED">Applied</option>
+                            <option value="IN_REVIEW">In Review</option>
+                            <option value="INTERVIEW">Interview</option>
+                            <option value="OFFER">Offer</option>
+                            <option value="REJECTED">Rejected</option>
+                            <option value="WITHDRAWN">Withdrawn</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editJobUrl">Job posting URL</label>
+                    <input type="url" id="editJobUrl" name="jobUrl"
+                           class="form-control" placeholder="https://..." />
+                </div>
+
+                <div class="form-group">
+                    <label for="editNotes">Notes</label>
+                    <textarea id="editNotes" name="notes" class="form-control" rows="3"></textarea>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('editModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update Application</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Serialize application data for JS edit modal -->
+<script th:inline="javascript">
+    const applicationData = /*[[${applicationsJson}]]*/ [];
+</script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>
